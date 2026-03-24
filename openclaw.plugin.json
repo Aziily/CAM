@@ -1,0 +1,29 @@
+{
+  "id": "macos-control",
+  "name": "CAM — Control Anything on MacOS",
+  "description": "Control macOS UI elements via the Accessibility API. Query AX trees (like a DOM tree), click, scroll, type text, press shortcuts, take screenshots, and switch apps — no vision model required.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "screenshotOnQuery": {
+        "type": "boolean"
+      },
+      "maxElements": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 500
+      }
+    }
+  },
+  "uiHints": {
+    "screenshotOnQuery": {
+      "label": "Screenshot on Query",
+      "help": "Capture a screenshot when querying UI elements"
+    },
+    "maxElements": {
+      "label": "Max Elements",
+      "help": "Maximum number of UI elements to return per query (default: 200)"
+    }
+  }
+}

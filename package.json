@@ -1,0 +1,37 @@
+{
+  "name": "macos-control",
+  "version": "1.0.0",
+  "description": "CAM — Control Anything on MacOS. An OpenClaw plugin for AI-driven macOS UI automation via the Accessibility API.",
+  "type": "module",
+  "main": "index.js",
+  "openclaw": {
+    "extensions": [
+      "./index.js"
+    ]
+  },
+  "scripts": {
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.0"
+  },
+  "author": "Aziily <zkchen66@outlook.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aziily/CAM.git"
+  },
+  "homepage": "https://github.com/Aziily/CAM",
+  "bugs": {
+    "url": "https://github.com/Aziily/CAM/issues"
+  },
+  "keywords": [
+    "macos",
+    "accessibility",
+    "automation",
+    "openclaw",
+    "plugin",
+    "ui-control",
+    "ax-api"
+  ]
+}
