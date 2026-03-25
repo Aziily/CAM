@@ -143,11 +143,22 @@ if r1.rawValue == 0 {
     Thread.sleep(forTimeInterval: 0.1)
 }
 
+// Get windows: try AXWindows first, fallback to AXMainWindow/AXFocusedWindow
+// (Chrome and some apps return empty AXWindows when not frontmost)
+var wins: [AXUIElement] = []
 var winsVal: CFTypeRef?
-guard AXUIElementCopyAttributeValue(appEl, kAXWindowsAttribute as CFString, &winsVal) == .success,
-      let wins = winsVal as? [AXUIElement], !wins.isEmpty else {
-    fputs("no windows found\n", stderr); exit(1)
+if AXUIElementCopyAttributeValue(appEl, kAXWindowsAttribute as CFString, &winsVal) == .success,
+   let w = winsVal as? [AXUIElement], !w.isEmpty {
+    wins = w
+} else {
+    // Fallback: AXMainWindow then AXFocusedWindow
+    for attr in [kAXMainWindowAttribute, kAXFocusedWindowAttribute] as [String] {
+        var wVal: CFTypeRef?
+        if AXUIElementCopyAttributeValue(appEl, attr as CFString, &wVal) == .success,
+           let w = wVal { wins.append(w as! AXUIElement); break }
+    }
 }
+guard !wins.isEmpty else { fputs("no windows found\n", stderr); exit(1) }
 fputs("windows: \(wins.count)\n", stderr)
 
 for win in wins { guard elements.count < maxEl else { break }; traverse(win, depth: 30) }
