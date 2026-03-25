@@ -1012,13 +1012,16 @@ EXAMPLE (type into Cursor Composer):
         additionalProperties: false,
       },
       async execute(_id, params) {
-        const { x, y, app, label, role, button = "left", double_click = false } = params;
+        const { x, y, app, label, role, button = "left", double_click = false, wait_ms } = params;
+        const delay = typeof wait_ms === "number" ? wait_ms : 150;
         if (typeof x === "number" && typeof y === "number") {
           const result = await clickAtCoords(x, y, button, double_click);
+          if (delay > 0) await new Promise(r => setTimeout(r, delay));
           return { content: [{ type: "text", text: `Clicked at (${x}, ${y})${button === "right" ? " [right-click]" : ""}${double_click ? " [double]" : ""}. Method: ${result.method}` }] };
         }
         if (app && label) {
           const result = await clickElementByLabel(app, label, role || null);
+          if (delay > 0) await new Promise(r => setTimeout(r, delay));
           if (result.error) return { content: [{ type: "text", text: `Error: ${result.error}` }], isError: true };
           return { content: [{ type: "text", text: `Clicked: ${result.role} "${result.matched || label}" in ${app}` }] };
         }
@@ -1091,24 +1094,37 @@ COMMON SHORTCUTS:
 - { key: "z", modifiers: ["cmd"] } — Undo
 - { key: "n", modifiers: ["cmd"] } — New window/file
 - { key: "w", modifiers: ["cmd"] } — Close window ← use this to clean up after tasks
-- { key: "s", modifiers: ["cmd"] } — Save
+- { key: "s", modifiers: ["cmd"] } — Save (on an Untitled file this opens a native Save As dialog)
 - { key: "f", modifiers: ["cmd"] } — Find/Search
+
+SAVING FILES — GENERAL RULE:
+  Many apps (Electron-based editors, etc.) render their Save dialogs as Web content,
+  which means cam_type cannot reliably target the dialog's filename field.
+  If cam_type after a save shortcut does not produce the expected file:
+  → Use the exec tool to write the file content directly to the target path instead of
+    relying on the app's Save dialog. This is always more reliable.
 
 Modifiers: cmd, ctrl, alt/option, shift`,
       parameters: {
         type: "object",
         properties: {
           key: { type: "string", description: "Key name: 'return', 'escape', 'tab', 'space', 'delete', 'a'-'z', 'f1'-'f12', arrow keys ('up','down','left','right')" },
-          modifiers: { type: "array", items: { type: "string" }, description: "Modifier keys: cmd, ctrl, alt, option, shift" }
+          modifiers: { type: "array", items: { type: "string" }, description: "Modifier keys: cmd, ctrl, alt, option, shift" },
+          wait_ms: { type: "number", description: "Extra wait after key press in ms. Default: 600ms for cmd shortcuts (dialog open time), 80ms otherwise. Use 1200+ when opening Save dialogs before calling cam_type." }
         },
         required: ["key"],
         additionalProperties: false,
       },
       async execute(_id, params) {
-        const { key, modifiers = [] } = params;
+        const { key, modifiers = [], wait_ms } = params;
         await pressKey(key, modifiers);
+        // Default post-key delay: shortcuts that open dialogs/panels need extra time.
+        // Cmd+S / Cmd+Shift+S open save dialogs; Cmd+N opens new file dialogs, etc.
+        const isDialogShortcut = modifiers.some(m => ["cmd","command"].includes(m.toLowerCase()));
+        const delay = typeof wait_ms === "number" ? wait_ms : (isDialogShortcut ? 600 : 80);
+        if (delay > 0) await new Promise(r => setTimeout(r, delay));
         const modStr = modifiers.length > 0 ? `${modifiers.join("+")}+` : "";
-        return { content: [{ type: "text", text: `Pressed: ${modStr}${key}` }] };
+        return { content: [{ type: "text", text: `Pressed: ${modStr}${key} (waited ${delay}ms)` }] };
       }
     });
 
