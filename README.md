@@ -100,6 +100,8 @@ AXWindow "Downloads" @(0,25) 1280x755 {AXRaise|AXClose}
 
 Get a flat numbered list of all interactive elements with center coordinates. **This is the primary tool for UI automation.**
 
+> **Auto-screenshot:** When ≤ 5 elements are returned (e.g. app is loading or Electron content is not yet exposed), a screenshot is automatically attached to help the agent understand the current screen state.
+
 **Standard workflow:**
 1. `cam_list_elements(app)` → get numbered list with coordinates
 2. Identify target by label/role
@@ -134,6 +136,7 @@ Click by coordinates or by label.
 | `role` | string | — | AX role filter (e.g. `AXButton`) |
 | `button` | `"left"` \| `"right"` | — | Mouse button (default: `"left"`) |
 | `double_click` | boolean | — | Double-click (default: `false`) |
+| `wait_ms` | number | — | Extra wait after click in ms (default: 150) |
 
 ```json
 { "x": 640, "y": 400 }
@@ -167,6 +170,7 @@ Press a key or keyboard shortcut.
 |---|---|---|---|
 | `key` | string | ✅ | `return`, `escape`, `tab`, `space`, `delete`, `a`–`z`, `f1`–`f12`, `up/down/left/right` |
 | `modifiers` | string[] | — | `cmd`, `ctrl`, `alt`/`option`, `shift` |
+| `wait_ms` | number | — | Extra wait after key press in ms. Default: 600 ms for `cmd` shortcuts (dialog open time), 80 ms otherwise. Use 1200+ when opening Save dialogs before `cam_type`. |
 
 ```json
 { "key": "return" }
@@ -287,8 +291,9 @@ The agent will:
 CAM/
 ├── index.js               # Plugin entry point (ES module)
 ├── macos-ax.js            # Standalone AX helper (reference only)
-├── ax_traverse            # Swift binary: recursive AX tree traversal
-├── ax_search              # Swift binary: AXUIElementsForSearchPredicate
+├── ax_traverse.swift      # Swift source for ax_traverse binary
+├── ax_traverse            # Swift binary: recursive AX tree traversal (arm64)
+├── ax_search              # Swift binary: AXUIElementsForSearchPredicate (arm64)
 ├── openclaw.plugin.json   # Plugin manifest
 ├── package.json
 └── README.md / README.zh.md

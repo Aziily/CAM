@@ -100,6 +100,8 @@ AXWindow "下载" @(0,25) 1280x755 {AXRaise|AXClose}
 
 获取应用中所有可交互元素的扁平编号列表，包含中心坐标。**这是 UI 自动化的核心工具。**
 
+> **自动截图：** 当返回元素数量 ≤ 5 时（例如应用正在加载或 Electron 内容尚未暴露），会自动附加截图，帮助 Agent 了解当前屏幕状态。
+
 **标准工作流：**
 1. `cam_list_elements(app)` → 获取带坐标的编号列表
 2. 通过标签/角色定位目标元素
@@ -134,6 +136,7 @@ AXWindow "下载" @(0,25) 1280x755 {AXRaise|AXClose}
 | `role` | string | — | AX 角色过滤（如 `AXButton`） |
 | `button` | `"left"` \| `"right"` | — | 鼠标按键（默认：`"left"`） |
 | `double_click` | boolean | — | 双击（默认：`false`） |
+| `wait_ms` | number | — | 点击后额外等待时间，毫秒（默认：150） |
 
 ```json
 { "x": 640, "y": 400 }
@@ -167,6 +170,7 @@ AXWindow "下载" @(0,25) 1280x755 {AXRaise|AXClose}
 |---|---|---|---|
 | `key` | string | ✅ | `return`、`escape`、`tab`、`space`、`delete`、`a`–`z`、`f1`–`f12`、`up/down/left/right` |
 | `modifiers` | string[] | — | `cmd`、`ctrl`、`alt`/`option`、`shift` |
+| `wait_ms` | number | — | 按键后额外等待时间，毫秒。默认：`cmd` 快捷键 600 ms（等待对话框弹出），其他 80 ms。打开存储对话框后调用 `cam_type` 前建议设为 1200+。 |
 
 ```json
 { "key": "return" }
@@ -289,8 +293,9 @@ Agent 的执行流程：
 CAM/
 ├── index.js               # 插件入口（ES 模块）
 ├── macos-ax.js            # 独立 AX 辅助库（参考用）
-├── ax_traverse            # Swift 二进制：递归 AX 树遍历
-├── ax_search              # Swift 二进制：AXUIElementsForSearchPredicate 枚举
+├── ax_traverse.swift      # ax_traverse 二进制的 Swift 源码
+├── ax_traverse            # Swift 二进制：递归 AX 树遍历（arm64）
+├── ax_search              # Swift 二进制：AXUIElementsForSearchPredicate 枚举（arm64）
 ├── openclaw.plugin.json   # 插件清单
 ├── package.json
 └── README.md / README.zh.md
