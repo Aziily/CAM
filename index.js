@@ -232,12 +232,11 @@ async function queryInteractiveElements(appName, maxElements) {
       timeout: 15000,
       maxBuffer: 10 * 1024 * 1024,
     });
-    const result = JSON.parse(stdout.trim());
-    result.app = appName;
-    // Re-number IDs and cap at maxElements
-    result.elements = result.elements.slice(0, maxElements).map((e, i) => ({ ...e, id: i + 1 }));
-    result.count = result.elements.length;
-    return result;
+    const parsed = JSON.parse(stdout.trim());
+    // Binary returns a flat array; wrap it in the expected { app, elements, count } shape
+    const rawElements = Array.isArray(parsed) ? parsed : (parsed.elements || []);
+    const elements = rawElements.slice(0, maxElements).map((e, i) => ({ ...e, id: i + 1 }));
+    return { app: appName, elements, count: elements.length };
   } catch (e) {
     // Fallback: JXA deep traversal (slower but works without compiled binary)
   }
