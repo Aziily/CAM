@@ -294,7 +294,7 @@ async function clickAtCoords(x, y, button, doubleClick) {
   // Try cliclick first (fast, reliable)
   try {
     const cmd = doubleClick ? "dc" : (button === "right" ? "rc" : "c");
-    await execFileAsync("cliclick", [`${cmd}:${x},${y}`], { timeout: 5000 });
+    await execFileAsync("/opt/homebrew/bin/cliclick", [`${cmd}:${x},${y}`], { timeout: 5000 });
     return { success: true, method: "cliclick", x, y };
   } catch (e) {
     // Fallback: CGEvent via JXA
@@ -394,7 +394,7 @@ async function typeText(text, appName) {
   // Using spawn + stdin.write() sends the raw string bytes directly.
   const { spawn } = await import("node:child_process");
   await new Promise((resolve, reject) => {
-    const proc = spawn("pbcopy");
+    const proc = spawn("/usr/bin/pbcopy");
     proc.stdin.write(text, "utf8");
     proc.stdin.end();
     proc.on("close", resolve);
@@ -501,10 +501,11 @@ async function takeScreenshot(region) {
   if (region) {
     args.splice(1, 0, "-R", `${region.x},${region.y},${region.width},${region.height}`);
   }
-  await execFileAsync("screencapture", args, { timeout: 10000 });
+  // Use absolute path — LaunchAgent services may not have /usr/sbin in PATH
+  await execFileAsync("/usr/sbin/screencapture", args, { timeout: 10000 });
   // Resize to max 1280px wide to keep under API limits (avoid 413)
   try {
-    await execFileAsync("sips", ["-Z", "1280", "--out", tmpSmall, tmpRaw], { timeout: 10000 });
+    await execFileAsync("/usr/bin/sips", ["-Z", "1280", "--out", tmpSmall, tmpRaw], { timeout: 10000 });
     const data = await readFile(tmpSmall);
     await unlink(tmpRaw).catch(() => {});
     await unlink(tmpSmall).catch(() => {});
@@ -921,8 +922,15 @@ This is the PRIMARY tool for UI automation. The workflow is always:
 
 ## Key points
 - Center coordinates are ready to use with macos_click
-- For Electron apps (Cursor, 大象, VS Code), some elements (e.g. contenteditable inputs) may
-  not appear in the list — use cam_screenshot() to visually identify position, then click coordinates
+- If this tool returns only 0–2 elements, the UI is still loading or transitioning.
+  Do NOT retry immediately — call cam_screenshot() first to see the actual screen state,
+  then decide what to do based on what you see.
+- For Electron apps (QQMusic, Cursor, 大象, VS Code), search results and dynamic content
+  are Web-rendered and do NOT appear in the AX tree. When you can't find expected elements:
+  1. Call cam_screenshot() to see the actual screen
+  2. Identify the target visually and estimate its coordinates from the screenshot
+  3. Use cam_click({ x, y }) with those coordinates
+  4. Call cam_screenshot() again to verify the result
 - App Store search results (app cards with "Get"/"获取" buttons) may NOT appear in this list
   because they are rendered in a scroll view. If you don't see the app after searching:
   1. Call cam_screenshot() to visually confirm the search results are visible
