@@ -949,7 +949,22 @@ This is the PRIMARY tool for UI automation. The workflow is always:
       async execute(_id, params) {
         const { app, max_elements = 200 } = params;
         const data = await queryInteractiveElements(app, Math.min(Math.max(1, max_elements), 400));
-        return { content: [{ type: "text", text: formatInteractiveElements(data) }] };
+        const text = formatInteractiveElements(data);
+        const content = [{ type: "text", text }];
+        // When very few elements are found the UI is likely in a loading/transition state
+        // or the content is Web-rendered (Electron). Automatically attach a screenshot so
+        // the model can see the actual screen and decide what to do next.
+        if (data.elements && data.elements.length <= 5) {
+          try {
+            const base64 = await takeScreenshot(null);
+            content.push({
+              type: "text",
+              text: "\n[Auto-screenshot attached because only a few AX elements were found — the UI may be loading or Web-rendered. Use the image above to identify element positions by their visual coordinates.]"
+            });
+            content.push({ type: "image", data: base64, mimeType: "image/png" });
+          } catch (e) { /* screenshot failed — continue without it */ }
+        }
+        return { content };
       }
     });
 
